@@ -10,7 +10,7 @@ A small, free Windows utility for batch-converting a folder of FLAC tracks to PC
 
 ## Quick start
 
-1. Download this repository as a ZIP and extract it.
+1. [Download v1.0.0](https://github.com/Fsas12/flac-to-wav-dj/releases/download/v1.0.0/flac-to-wav-dj-v1.0.0.zip) and extract the ZIP.
 2. Install [FFmpeg](https://ffmpeg.org/download.html). On that page, choose a Windows build. Copy **ffmpeg.exe** from its bin folder next to the two converter scripts, or add that bin folder to PATH.
 3. Put your FLAC tracks beside **convert_flac_to_wav.bat** and **Convert-FlacToWav.ps1**. Keep both script files together.
 4. Double-click **convert_flac_to_wav.bat**.

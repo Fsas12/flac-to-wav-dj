@@ -10,7 +10,7 @@
 
 ## Как запустить
 
-1. Скачай репозиторий ZIP-архивом и распакуй.
+1. [Скачай v1.0.0](https://github.com/Fsas12/flac-to-wav-dj/releases/download/v1.0.0/flac-to-wav-dj-v1.0.0.zip) и распакуй ZIP.
 2. Открой [страницу загрузки FFmpeg](https://ffmpeg.org/download.html) и выбери сборку для Windows. Скопируй **ffmpeg.exe** из папки bin рядом со скриптами или добавь bin в PATH.
 3. Положи FLAC-треки рядом с **convert_flac_to_wav.bat** и **Convert-FlacToWav.ps1**. Оба скрипта должны быть в одной папке.
 4. Дважды кликни **convert_flac_to_wav.bat**.
