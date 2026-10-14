@@ -1,6 +1,4 @@
 @echo off
-setlocal DisableDelayedExpansion
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Convert-FlacToWav.ps1" %*
-set "result=%errorlevel%"
+mkdir wav 2>nul
+for %%a in (*.flac) do ffmpeg -i "%%a" "wav\%%~na.wav"
 pause
-exit /b %result%
