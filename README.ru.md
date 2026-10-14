@@ -66,14 +66,17 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Convert-FlacToWav.ps1 
 ## Поддержать автора
 
 <!-- donation:start -->
-Если утилита сэкономила тебе время, можно поддержать автора. Ссылка на донаты пока не настроена.
+Если утилита сэкономила тебе время, можно поддержать её развитие добровольным криптодонатом.
+
+| Сеть | Монеты | Адрес для получения |
+| --- | --- | --- |
+| **Solana** | USDC, USDT, SOL | `Hmm7KwiuEUUN58SxwPx8i5NGQnEwQqw3YEAzzwDnvk91` |
+| **Tron (TRC20)** | USDT | `TBBczfJbPkGaqyVt8Gw1VyGhewef5feyy7` |
+
+[Инструкция и QR-коды для доната](SUPPORT.md)
+
+В кошельке или на бирже отправителя выбирай именно ту сеть, которая указана в таблице.
 <!-- donation:end -->
-
-Для автора: запусти **Configure-Donations.ps1** со ссылкой на свою публичную платёжную страницу. Он обновит оба README и настройку кнопки Sponsor на GitHub. Номера карт, секретные ключи и данные входа в репозиторий добавлять не нужно.
-
-~~~powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Configure-Donations.ps1 -Url "https://your-public-donation-page.example"
-~~~
 
 ## Обратная связь и лицензия
 

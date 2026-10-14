@@ -70,14 +70,17 @@ Exit codes: **0** = all converted/skipped or no files; **1** = at least one file
 ## Support
 
 <!-- donation:start -->
-If this saves you time, a donation is welcome. A public donation link has not been configured yet.
+If this utility saves you time, you can support its development with a voluntary crypto donation.
+
+| Network | Accepted assets | Receive address |
+| --- | --- | --- |
+| **Solana** | USDC, USDT, SOL | `Hmm7KwiuEUUN58SxwPx8i5NGQnEwQqw3YEAzzwDnvk91` |
+| **Tron (TRC20)** | USDT | `TBBczfJbPkGaqyVt8Gw1VyGhewef5feyy7` |
+
+[Donation instructions and QR codes](SUPPORT.md)
+
+Select the exact network shown above in your sending wallet or exchange.
 <!-- donation:end -->
-
-For maintainers: run **Configure-Donations.ps1** with your public HTTPS donation-page URL. It updates this section, the Russian README and GitHub's Sponsor configuration. Do not put bank-card numbers or private payment credentials in the repository.
-
-~~~powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Configure-Donations.ps1 -Url "https://your-public-donation-page.example"
-~~~
 
 ## Contributing
 
