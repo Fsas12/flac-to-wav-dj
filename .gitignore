@@ -1,0 +1,10 @@
+*.flac
+*.wav
+*.mp3
+*.aiff
+*.exe
+wav/
+conversion-*.csv
+.flac-to-wav-*
+.local/
+.git/
