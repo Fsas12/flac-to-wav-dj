@@ -1,76 +1,63 @@
-![FLAC to WAV for DJs](assets/banner.png)
-
 # FLAC → WAV for DJs
 
-A small, free Windows utility for batch-converting a folder of FLAC tracks to PCM WAV with FFmpeg.
+Need WAV copies of your FLAC tracks for your DJ setup? Batch-convert the FLAC files in a folder on Windows and find the results in a separate `wav` folder.
 
-**Folder in. WAVs out. Get back to preparing your set.**
+**[Download the BAT version for Windows — ZIP](https://github.com/Fsas12/flac-to-wav-dj/archive/refs/heads/main.zip)** · [Русская инструкция](README.ru.md)
 
-[Русская инструкция](README.ru.md) · [Support the project](#support)
+Free to use. Original FLAC files stay untouched, and audio is processed on your computer.
+
+**Requirements:** Windows 10/11 and FFmpeg downloaded separately. This BAT version does not require a companion PowerShell script.
+
+**About v1.0.0:** the release is a different, PowerShell-based version. A launch problem has been reported with that version. The download above contains the simple BAT version currently recommended here.
 
 ## Quick start
 
-1. [Download v1.0.0](https://github.com/Fsas12/flac-to-wav-dj/releases/download/v1.0.0/flac-to-wav-dj-v1.0.0.zip) and extract the ZIP.
-2. Install [FFmpeg](https://ffmpeg.org/download.html). On that page, choose a Windows build. Copy **ffmpeg.exe** from its bin folder next to the two converter scripts, or add that bin folder to PATH.
-3. Put your FLAC tracks beside **convert_flac_to_wav.bat** and **Convert-FlacToWav.ps1**. Keep both script files together.
-4. Double-click **convert_flac_to_wav.bat**.
-5. Find the results in the **wav** folder. The window reports converted, skipped and failed files.
+1. Download and extract the ZIP linked above. Open the extracted project folder containing `convert_flac_to_wav.bat`.
+2. Set up FFmpeg. On 64-bit Windows, open [Gyan's Windows builds](https://www.gyan.dev/ffmpeg/builds/), download `ffmpeg-release-essentials.zip`, and extract it. Copy `ffmpeg.exe` from its `bin` folder into the folder containing the BAT file. If FFmpeg is already available through PATH, skip this step.
+3. For a first try, copy 1–2 FLAC tracks directly into that same folder. Subfolders are not scanned.
+4. Double-click `convert_flac_to_wav.bat`. FFmpeg's progress and any errors appear in the window.
+5. Open the `wav` folder beside the BAT file. Play the resulting WAVs and check them in your DJ software or player before processing the rest of your selection.
 
-Requires Windows 10/11 with Windows PowerShell 5.1 or newer and a separately installed FFmpeg. No administrator rights are required to run the converter. The BAT launcher uses a process-scoped execution-policy override to run its companion script; it does not change the system policy. Managed computer policies may still prevent it from running.
+**If a WAV with the same name already exists, FFmpeg may ask to overwrite it. Choose `N` to keep it, or use a fresh project folder for another conversion. This BAT does not automatically skip existing WAVs.**
 
-## What it does
+[Need help?](#troubleshooting) · [Report a problem](https://github.com/Fsas12/flac-to-wav-dj/issues/new)
 
-- Converts the first audio stream of each .flac file to integer PCM WAV.
-- Leaves original FLAC files untouched.
-- Skips existing output files; it never overwrites them.
-- Writes a temporary WAV, then moves it into place only when FFmpeg succeeds.
-- Continues after a damaged file and writes a timestamped CSV log.
-- Handles spaces, Cyrillic names, brackets and punctuation in filenames.
-- Optionally scans subfolders, preserving their relative paths.
-- Runs locally. The scripts do not upload audio, collect telemetry or make network requests.
+![FLAC to WAV for DJs](assets/banner.png)
 
-## Audio settings
+## What this BAT does
 
-Default: **16-bit PCM**, original sample rate and channel count. For 24-bit source audio, the default reduces bit depth; choose 24-bit if you want to keep that precision. Raising bit depth does not restore information absent from the source. The script does not normalize, limit, downmix or change BPM.
+- Runs FFmpeg for each `.flac` file directly in the current folder.
+- Saves WAV files with matching base names in a `wav` subfolder.
+- Leaves the source FLAC files untouched.
+- Displays FFmpeg's console output and keeps the window open at the end.
+- Processes audio locally; the BAT contains no upload or telemetry commands.
 
-WAV compatibility depends on the specific player and its supported sample rates, bit depths and channel counts. Check your device manual. Tags are copied where the WAV container supports them; artwork and all DJ/library metadata are not guaranteed to survive. WAVs usually occupy more disk space than FLACs. This tool does not prepare USB-drive formats or analyze tracks in DJ software.
+This simple launcher has no settings interface, recursive scanning, automatic safe-skip mode, CSV log, or converted/skipped/failed summary.
 
-## Use an existing music folder
+## Audio settings and compatibility
 
-Run in PowerShell from the extracted project directory:
+The BAT uses FFmpeg's default WAV conversion settings. FFmpeg's default WAV audio encoder is 16-bit PCM; this launcher does not offer a 24-bit mode or selectable sample rate. Do not assume that a 24-bit FLAC retains its original bit depth.
 
-~~~powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Convert-FlacToWav.ps1 -InputDirectory "D:\Music\Set"
-~~~
+Compatibility depends on your player's supported bit depths, sample rates and channel counts. Check the resulting files on the intended device. Preservation of artwork and all DJ/library metadata is not guaranteed, and WAV files usually occupy more disk space than FLACs.
 
-The output defaults to a wav subfolder of the input folder.
-
-~~~powershell
-# Scan subfolders and keep 24-bit precision
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Convert-FlacToWav.ps1 -InputDirectory "D:\Music\Set" -Recurse -BitDepth 24
-
-# Choose a different output folder and explicitly request 44.1 kHz
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Convert-FlacToWav.ps1 -InputDirectory "D:\Music\Set" -OutputDirectory "D:\Music\WAV" -SampleRate 44100
-~~~
-
-Available options: InputDirectory, OutputDirectory, Recurse, BitDepth (16 or 24), SampleRate (0 = original, 44100, 48000), FFmpegPath (explicit path to ffmpeg.exe).
-
-Exit codes: **0** = all converted/skipped or no files; **1** = at least one file failed; **2** = setup error. Logs contain local file paths: review them before sharing in an issue.
+The utility does not format USB drives or analyze tracks in DJ software.
 
 ## Troubleshooting
 
-**FFmpeg not found:** put ffmpeg.exe beside the scripts or restart your terminal after updating PATH.
+**FFmpeg is not recognized:** put `ffmpeg.exe` in the extracted project folder and launch the BAT from that folder. Alternatively, add FFmpeg's `bin` folder to PATH and open a new terminal before trying again.
 
-**No files found:** the default scans only the script folder. Choose InputDirectory, or use Recurse for subfolders.
+**No FLAC files are converted:** place the FLAC files directly beside the BAT. Files inside subfolders are not scanned.
 
-**Skipped:** an output with that name already exists. Choose another OutputDirectory to reconvert safely.
+**FFmpeg asks to overwrite a file:** choose `N` to keep the existing WAV. For a fresh conversion, use another project folder.
 
-**Failed:** inspect the CSV error field. Try playing or validating the source FLAC. A failed conversion does not replace an existing WAV.
+**An error appears or a WAV does not play:** read the FFmpeg message in the window and check whether the source FLAC plays. This BAT does not validate completed outputs or produce a CSV error log; inspect the resulting files before using them for a set.
+
+**You downloaded v1.0.0:** that release uses a different PowerShell implementation. For the simple BAT workflow documented here, use the ZIP linked at the top of this page.
 
 ## Support
 
 <!-- donation:start -->
-If this utility saves you time, you can support its development with a voluntary crypto donation.
+This utility is free to use. If it saves you time, you can support its development with a voluntary crypto donation.
 
 | Network | Accepted assets | Receive address |
 | --- | --- | --- |
@@ -84,7 +71,9 @@ Select the exact network shown above in your sending wallet or exchange.
 
 ## Contributing
 
-Issues and small pull requests are welcome. Include your Windows version, FFmpeg version, chosen options and a redacted error message. Use synthetic test audio; do not upload copyrighted tracks or your music library.
+[Report a problem](https://github.com/Fsas12/flac-to-wav-dj/issues/new) with your Windows version, FFmpeg version, the download you used (BAT version or v1.0.0), and the error text without personal information. Do not upload your music library; use synthetic test audio for examples.
+
+Small pull requests are welcome.
 
 ## License and credits
 
