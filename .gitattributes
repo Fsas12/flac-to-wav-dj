@@ -2,3 +2,5 @@
 *.ps1 text eol=crlf
 *.md text eol=lf
 *.yml text eol=lf
+*.command text eol=lf
+*.py text eol=lf

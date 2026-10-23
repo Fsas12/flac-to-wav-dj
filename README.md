@@ -1,16 +1,18 @@
 # FLAC → WAV for DJs
 
-Need WAV copies of your FLAC tracks for your DJ setup? Batch-convert the FLAC files in a folder on Windows and find the results in a separate `wav` folder.
+Need WAV copies of your FLAC tracks for your DJ setup? Batch-convert the FLAC files in a folder on Windows or macOS and find the results in a separate `wav` folder.
 
-**[Download the BAT version for Windows — ZIP](https://github.com/Fsas12/flac-to-wav-dj/archive/refs/heads/main.zip)** · [Русская инструкция](README.ru.md)
+**[Download for Windows & macOS — ZIP](https://github.com/Fsas12/flac-to-wav-dj/archive/refs/heads/main.zip)** · [macOS setup](README.macOS.md) · [Русская инструкция](README.ru.md)
 
 Free to use. Original FLAC files stay untouched, and audio is processed on your computer.
 
-**Requirements:** Windows 10/11 and FFmpeg downloaded separately. This BAT version does not require a companion PowerShell script.
+**Windows:** Windows 10/11 and FFmpeg downloaded separately; use `convert_flac_to_wav.bat`. **macOS:** use `convert_flac_to_wav.command` and follow the [macOS instructions](README.macOS.md). Neither launcher requires the companion PowerShell script from v1.0.0.
 
-**About v1.0.0:** the release is a different, PowerShell-based version. A launch problem has been reported with that version. The download above contains the simple BAT version currently recommended here.
+**About v1.0.0:** the release is a different, PowerShell-based version. A launch problem has been reported with that version. The download above contains the current Windows BAT and macOS `.command` versions.
 
 ## Quick start
+
+**Windows** — for macOS, follow [these instructions](README.macOS.md).
 
 1. Download and extract the ZIP linked above. Open the extracted project folder containing `convert_flac_to_wav.bat`.
 2. Set up FFmpeg. On 64-bit Windows, open [Gyan's Windows builds](https://www.gyan.dev/ffmpeg/builds/), download `ffmpeg-release-essentials.zip`, and extract it. Copy `ffmpeg.exe` from its `bin` folder into the folder containing the BAT file. If FFmpeg is already available through PATH, skip this step.
@@ -23,6 +25,12 @@ Free to use. Original FLAC files stay untouched, and audio is processed on your 
 [Need help?](#troubleshooting) · [Report a problem](https://github.com/Fsas12/flac-to-wav-dj/issues/new)
 
 ![FLAC to WAV for DJs](assets/banner.png)
+
+## macOS
+
+Use `convert_flac_to_wav.command`: double-click it after installing FFmpeg and placing FLAC files beside it. Results go to `wav`. This macOS script skips existing WAVs and reports converted/skipped/failed counts; those features are specific to the macOS launcher.
+
+[macOS setup and troubleshooting](README.macOS.md)
 
 ## What this BAT does
 
@@ -71,7 +79,7 @@ Select the exact network shown above in your sending wallet or exchange.
 
 ## Contributing
 
-[Report a problem](https://github.com/Fsas12/flac-to-wav-dj/issues/new) with your Windows version, FFmpeg version, the download you used (BAT version or v1.0.0), and the error text without personal information. Do not upload your music library; use synthetic test audio for examples.
+[Report a problem](https://github.com/Fsas12/flac-to-wav-dj/issues/new) with your operating system version, FFmpeg version, the launcher you used (Windows BAT, macOS .command, or v1.0.0), and the error text without personal information. Do not upload your music library; use synthetic test audio for examples.
 
 Small pull requests are welcome.
 
