@@ -4,78 +4,64 @@
 
 ## Русская инструкция
 
-Небольшой скрипт для запуска двойным кликом: FLAC и AIFF лежат рядом с ним, готовые WAV появляются в папке `wav`. Нужен отдельно установленный FFmpeg. Скрипт рассчитан на штатный `/bin/bash` macOS и ищет FFmpeg в PATH, рядом с собой и в стандартных папках Homebrew для Apple Silicon и Intel.
+### Без установки программ и без Terminal
 
-### Один раз: подготовка
+1. Скачай ZIP и распакуй его.
+2. Открой **FLAC to WAV DJ.app** двойным кликом.
+3. Выбери папку с FLAC / AIFF.
+4. После обработки нажми **Open WAV folder**: результат находится в подпапке `wav` выбранной папки.
 
-1. Скачай ZIP по ссылке выше и распакуй его. Открой папку с `convert_flac_to_wav.command`.
-2. Если FFmpeg ещё не установлен и у тебя есть Homebrew, открой Terminal и выполни:
+Приложение использует `afconvert`, встроенный в macOS. FFmpeg и Homebrew не нужны; дополнительных загрузок нет. Папку приложения можно перенести отдельно от остальных файлов проекта, например в «Программы»: конвертер включён внутрь пакета.
 
-   ```sh
-   brew install ffmpeg
-   ```
+При первом открытии macOS может запросить разрешение. У приложения нет подписи и нотариального заверения Apple Developer ID. Если система блокирует открытие, проверь источник и следуй [инструкции Apple для доверенных приложений](https://support.apple.com/102445): после попытки запуска открыть «Системные настройки → Конфиденциальность и безопасность → Всё равно открыть». Вводить команды или отключать Gatekeeper целиком не нужно.
 
-   Если Homebrew нет, установи его по инструкции на [brew.sh](https://brew.sh), включая шаги после установки, а затем выполни команду выше. Если твоя версия macOS не поддерживается текущим Homebrew, используй совместимую с ней сборку FFmpeg из [вариантов на сайте FFmpeg](https://ffmpeg.org/download.html#build-mac) и положи исполняемый файл `ffmpeg` рядом со скриптом. Бинарный FFmpeg в ZIP не включён.
+### Поведение и звук
 
-### Каждый раз: конвертация
+- Поддерживаются `.flac`, `.aif`, `.aiff`, включая верхний и смешанный регистр.
+- Обрабатываются файлы непосредственно в выбранной папке; вложенные папки не сканируются.
+- Исходники не изменяются. Существующие выходные WAV пропускаются.
+- При ошибке одного трека остальные продолжают обрабатываться. Итоговое окно показывает количество готовых, пропущенных и ошибочных файлов.
+- Выход — PCM WAV 16 бит, без явного изменения частоты и количества каналов. Для 24-битных исходников разрядность снижается; выбора 24 бит нет.
+- Аудио остаётся на компьютере. CSV-логов нет, обложки и все данные DJ-библиотеки могут не сохраниться.
+- Одинаковое базовое имя даёт один результат: `track.flac` и `track.aiff` используют `wav/track.wav`. Для обоих результатов задай разные имена.
 
-1. Скопируй FLAC- или AIFF-треки непосредственно в папку с `convert_flac_to_wav.command`.
-2. Дважды кликни `convert_flac_to_wav.command`. Откроется окно Terminal с ходом обработки.
-3. Забери результат из подпапки `wav`. В конце будет количество готовых, пропущенных и ошибочных файлов.
+Приложение рассчитано на macOS 11 и новее. Проверь 1–2 результата на своём плеере перед обработкой всей библиотеки.
 
-Исходные FLAC и AIFF остаются без изменений. Существующие выходные WAV пропускаются. При ошибке одного трека скрипт продолжает обработку остальных; незавершённый временный WAV удаляется, если скрипт может выполнить очистку. После принудительного завершения процесса временный файл может остаться скрытым в `wav`.
+### Дополнительный вариант: старый запускатель
 
-**Звук:** PCM WAV 16 бит, без явного изменения частоты и количества каналов. Для 24-битного FLAC или AIFF это означает снижение разрядности. Выбора 24 бит в этой версии нет. Вложенные папки не сканируются; CSV-логов нет. Скрипт не загружает аудио в интернет и не устанавливает программы автоматически.
+`convert_flac_to_wav.command` также сохранён. Положи FLAC / AIFF рядом с ним и запусти двойным кликом: откроется окно Terminal с ходом обработки, вводить команды не нужно. Если FFmpeg уже установлен, этот запускатель использует его. Если FFmpeg нет, он автоматически использует встроенный `afconvert`.
 
-Проверь 1–2 результата в своём DJ-софте и на нужном плеере перед обработкой всей подборки. WAV обычно занимает больше места; сохранение обложек и всех данных DJ-библиотеки не гарантируется.
-
-**Совпадающие имена:** `track.flac`, `track.aif` и `track.aiff` дают один `wav/track.wav`. Будет сохранён первый результат, остальные пропущены; используй разные базовые имена, чтобы сохранить все варианты.
-
-### Если не запускается
-
-- **Нет права на выполнение:** в Terminal набери `chmod +x ` с пробелом в конце, перетащи `convert_flac_to_wav.command` из Finder в это окно и нажми Enter. Затем повтори двойной клик.
-- **macOS требует разрешить запуск:** проверь источник файла и следуй [инструкции Apple для доверенных приложений](https://support.apple.com/102445). Отключать Gatekeeper целиком не требуется.
-- **FFmpeg not found:** проверь установку FFmpeg. Скрипт также ищет `/opt/homebrew/bin/ffmpeg` и `/usr/local/bin/ffmpeg`, даже когда Finder не загрузил настройки PATH из Terminal.
-- **No FLAC or AIFF files found:** положи треки непосредственно рядом со скриптом. Поддерживаются расширения `.flac`, `.aif`, `.aiff`, в том числе `.FLAC`, `.AIF`, `.AIFF` и смешанный регистр.
-- **Ошибка конвертации:** прочитай сообщение FFmpeg в окне, проверь исходник и свободное место. Исходные FLAC и AIFF не удаляются.
-
-Из Terminal можно обработать другую папку, не копируя музыку:
-
-```sh
-/bin/bash ./convert_flac_to_wav.command "/путь/к/папке с музыкой"
-```
+После принудительного завершения процесса скрытый временный файл может остаться в `wav`. При обычной ошибке скрипт удаляет свой незавершённый временный файл.
 
 ## English instructions
 
-Download and extract the ZIP above. This small script uses macOS's built-in `/bin/bash`; FFmpeg is a separate dependency. It searches PATH, the script folder, `/opt/homebrew/bin`, and `/usr/local/bin`.
+### No dependency installation or Terminal commands
 
-1. Install FFmpeg once: if Homebrew is installed, run `brew install ffmpeg` in Terminal. Otherwise follow [brew.sh](https://brew.sh) first, including its post-install steps. On a macOS version unsupported by current Homebrew, use a compatible macOS build from the [FFmpeg download options](https://ffmpeg.org/download.html#build-mac) and put the executable named `ffmpeg` beside the script.
-2. Copy a few FLAC or AIFF tracks directly beside `convert_flac_to_wav.command`.
-3. Double-click the `.command` file. Find the results in its `wav` subfolder and check them in your DJ software or player.
+1. Download and extract the ZIP.
+2. Double-click **FLAC to WAV DJ.app**.
+3. Choose the folder containing your FLAC / AIFF tracks.
+4. Click **Open WAV folder** when conversion finishes.
 
-Originals are untouched. Existing outputs are skipped. Processing continues after a failed track, with converted/skipped/failed counts at the end. Temporary output files are cleaned up on handled failures; a force-killed process can leave a hidden temporary file behind. Filenames with spaces and Cyrillic characters and uppercase FLAC/AIFF extensions are supported.
+The app uses macOS's built-in `afconvert`. No FFmpeg, Homebrew, or extra software download is needed. The converter is embedded in the app bundle, so you can move the app on its own to Applications.
 
-**Matching base names:** `track.flac`, `track.aif`, and `track.aiff` share `wav/track.wav`. The first output is kept and later ones are skipped. Use different base names to keep all versions.
+macOS may ask for first-open approval. The app is not signed or notarized with an Apple Developer ID; follow [Apple's trusted-software instructions](https://support.apple.com/102445) if blocked. No global Gatekeeper change or Terminal command is needed.
 
-Output is **16-bit PCM WAV**, with no explicit sample-rate or channel-count change. This reduces bit depth for 24-bit sources. There is no 24-bit selection, subfolder scanning or CSV log. Audio stays local; the script does not install dependencies automatically. Preservation of all artwork and DJ metadata is not guaranteed.
+Files directly in the selected folder are converted to **16-bit PCM WAV** in its `wav` subfolder. Originals stay untouched, existing outputs are skipped, and processing continues after a failed track. The final dialog shows converted/skipped/failed counts. Sample rate and channel count are not explicitly changed. There is no 24-bit selector, subfolder scanning or CSV log. For 24-bit sources, bit depth is reduced. Artwork and all DJ metadata are not guaranteed to survive.
 
-If the file is not executable, type `chmod +x ` in Terminal, drag the `.command` file into the window, press Return, and retry. If macOS asks you to approve the file, follow [Apple's instructions for trusted software](https://support.apple.com/102445) after checking its source.
+Matching base names share one output: `track.flac` and `track.aiff` both map to `wav/track.wav`. Use distinct base names to keep both versions.
 
-To convert a different folder from Terminal:
+The app targets macOS 11 and newer. Check a few results in your intended player before converting a whole library.
 
-```sh
-/bin/bash ./convert_flac_to_wav.command "/path/to/music folder"
-```
-
-Exit codes: `0` = completed/skipped or no FLAC/AIFF files; `1` = at least one file failed; `2` = setup error. `Ctrl+C` stops the run.
+The original `convert_flac_to_wav.command` remains available: double-click it with audio files beside it. It uses an existing FFmpeg or automatically falls back to built-in `afconvert`. It opens a Terminal window but needs no typed commands.
 
 ## Development checks
 
-With Python 3 and FFmpeg installed, run:
+Python 3 and FFmpeg are needed only to generate synthetic test fixtures. The end-user Mac app has neither dependency.
 
 ```sh
-/bin/bash -n convert_flac_to_wav.command
-python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s tests -p test_macos_converter.py -v
+FLAC_TO_WAV_ENGINE=afconvert python3 -m unittest discover -s tests -p test_macos_converter.py -v
+python3 -m unittest discover -s tests -p test_app_bundle.py -v
 ```
 
-Tests use generated synthetic audio. They do not need access to a music library.
+When editing the shared converter, also copy it into `FLAC to WAV DJ.app/Contents/Resources/convert_flac_to_wav.command`. The bundle test checks that both copies are identical. UI dialogs require an interactive Mac session; native audio conversion and bundle structure are checked in CI.

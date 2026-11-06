@@ -51,8 +51,15 @@ if [ "${#input_files[@]}" -eq 0 ]; then
 fi
 
 # Finder does not necessarily load the same PATH as an interactive Terminal.
+requested_engine=${FLAC_TO_WAV_ENGINE:-auto}
+case "$requested_engine" in
+    auto|ffmpeg|afconvert) ;;
+    *) printf 'ERROR: Unknown audio engine.\n' >&2; finish 2 ;;
+esac
 ffmpeg=''
-if [ -f "$script_dir/ffmpeg" ] && [ -x "$script_dir/ffmpeg" ]; then
+if [ "$requested_engine" = afconvert ]; then
+    :
+elif [ -f "$script_dir/ffmpeg" ] && [ -x "$script_dir/ffmpeg" ]; then
     ffmpeg="$script_dir/ffmpeg"
 elif command -v ffmpeg >/dev/null 2>&1; then
     ffmpeg=$(command -v ffmpeg)
@@ -64,7 +71,14 @@ else
         fi
     done
 fi
-if [ -z "$ffmpeg" ]; then
+engine=ffmpeg
+if [ "$requested_engine" = afconvert ] || { [ -z "$ffmpeg" ] && [ "$requested_engine" = auto ] && [ -x /usr/bin/afconvert ]; }; then
+    engine=afconvert
+    if [ ! -x /usr/bin/afconvert ]; then
+        printf 'ERROR: The built-in macOS audio converter is unavailable.\n' >&2
+        finish 2
+    fi
+elif [ -z "$ffmpeg" ]; then
     printf 'FFmpeg not found. / FFmpeg не найден.\n\n'
     printf 'Install it once with Homebrew in Terminal:\n  brew install ffmpeg\n\n'
     printf 'No Homebrew yet? Follow https://brew.sh first.\n'
@@ -83,6 +97,15 @@ skipped=0
 failed=0
 index=0
 printf 'FLAC / AIFF -> WAV | 16-bit PCM | %s files\nInput: %s\n\n' "${#input_files[@]}" "$source_dir"
+printf 'Engine: %s\n' "$engine"
+convert_audio() {
+    if [ "$engine" = afconvert ]; then
+        /usr/bin/afconvert -f WAVE -d LEI16 "$1" "$2"
+    else
+        "$ffmpeg" -hide_banner -nostdin -loglevel error -y -i "$1" \
+            -map 0:a:0 -vn -map_metadata 0 -c:a pcm_s16le -f wav "$2"
+    fi
+}
 for source in "${input_files[@]}"; do
     index=$((index + 1))
     filename=${source##*/}
@@ -99,8 +122,7 @@ for source in "${input_files[@]}"; do
         finish 2
     fi
     # -y applies only to our private mktemp file, never to an existing WAV.
-    if "$ffmpeg" -hide_banner -nostdin -loglevel error -y -i "$source" \
-        -map 0:a:0 -vn -map_metadata 0 -c:a pcm_s16le -f wav "$temp_file" && [ -s "$temp_file" ]; then
+    if convert_audio "$source" "$temp_file" && [ -s "$temp_file" ]; then
         # BSD mv -n also works on removable volumes without hard-link support.
         if mv -n -- "$temp_file" "$target"; then
             if [ -f "$temp_file" ]; then

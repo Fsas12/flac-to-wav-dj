@@ -5,6 +5,9 @@ on:
     paths:
       - 'convert_flac_to_wav.command'
       - 'convert_flac_to_wav.bat'
+      - 'Install-FFmpeg.ps1'
+      - 'FLAC to WAV DJ.app/**'
+      - 'tests/**'
       - 'tests/test_macos_converter.py'
       - 'tests/test_windows_converter.py'
       - '.github/workflows/macos-converter.yml'
@@ -12,6 +15,9 @@ on:
     paths:
       - 'convert_flac_to_wav.command'
       - 'convert_flac_to_wav.bat'
+      - 'Install-FFmpeg.ps1'
+      - 'FLAC to WAV DJ.app/**'
+      - 'tests/**'
       - 'tests/test_macos_converter.py'
       - 'tests/test_windows_converter.py'
       - '.github/workflows/macos-converter.yml'
@@ -36,6 +42,14 @@ jobs:
         run: command -v ffmpeg >/dev/null 2>&1 || brew install ffmpeg
       - name: Test with real conversions and synthetic audio
         run: python3 -m unittest discover -s tests -p test_macos_converter.py -v
+      - name: Test built-in macOS conversion without FFmpeg
+        env:
+          FLAC_TO_WAV_ENGINE: afconvert
+        run: python3 -m unittest discover -s tests -p test_macos_converter.py -v
+      - name: Check the standalone Finder app
+        run: |
+          test -x "FLAC to WAV DJ.app/Contents/MacOS/launch"
+          python3 -m unittest discover -s tests -p test_app_bundle.py -v
 
   windows-synthetic-audio:
     runs-on: windows-latest
@@ -53,3 +67,5 @@ jobs:
           }
       - name: Test BAT with real conversions and synthetic audio
         run: python -m unittest discover -s tests -p test_windows_converter.py -v
+      - name: Test first-time FFmpeg installation and cached startup
+        run: python -m unittest discover -s tests -p test_windows_setup.py -v

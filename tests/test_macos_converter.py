@@ -152,6 +152,8 @@ class MacConverterTests(unittest.TestCase):
         self.assertTrue((self.root / "wav" / "good.wav").is_file())
 
     def test_missing_dependency_has_actionable_message(self):
+        if Path('/usr/bin/afconvert').is_file() and os.environ.get('FLAC_TO_WAV_ENGINE', 'auto') != 'ffmpeg':
+            self.skipTest('macOS provides its own audio converter')
         if any(Path(path).exists() for path in ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"]):
             self.skipTest("Homebrew fallback is installed on this host")
         self.track()
@@ -164,6 +166,14 @@ class MacConverterTests(unittest.TestCase):
         result = self.run_converter(self.root / "missing")
         self.assertEqual(result.returncode, 2)
         self.assertIn("Cannot open the input folder", result.stderr)
+
+    @unittest.skipUnless(Path('/usr/bin/afconvert').is_file(), 'Requires macOS audio tools')
+    def test_builtin_engine_does_not_need_ffmpeg(self):
+        self.track('native.aiff')
+        result = self.run_converter(env={**os.environ, 'FLAC_TO_WAV_ENGINE': 'afconvert'})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Engine: afconvert', result.stdout)
+        self.assertTrue((self.root / 'wav' / 'native.wav').is_file())
 
     def test_local_ffmpeg_executable_is_found(self):
         self.track()

@@ -1,0 +1,40 @@
+#!/bin/bash
+# Finder entry point. Only built-in macOS tools are required.
+set -u
+bundle_bin=$(cd -- "${0%/*}" && pwd -P) || exit 2
+converter="$bundle_bin/../Resources/convert_flac_to_wav.command"
+folder=$(/usr/bin/osascript <<'APPLESCRIPT'
+activate
+try
+    return POSIX path of (choose folder with prompt "Choose a folder with FLAC / AIFF tracks / Выбери папку с треками:")
+on error number -128
+    return ""
+end try
+APPLESCRIPT
+) || exit 0
+[ -n "$folder" ] || exit 0
+log=$(mktemp -t flac-to-wav-dj) || exit 2
+trap 'rm -f -- "$log"' EXIT
+FLAC_TO_WAV_ENGINE=afconvert /bin/bash "$converter" "$folder" >"$log" 2>&1
+result=$?
+if [ "$result" -eq 0 ] || [ "$result" -eq 1 ]; then
+    summary=$(tail -n 2 "$log")
+else
+    summary=$(tail -n 8 "$log")
+fi
+if [ "$result" -eq 1 ]; then
+    summary="Some files failed. / Часть файлов не обработана.
+$summary"
+fi
+button=$(/usr/bin/osascript - "$summary" <<'APPLESCRIPT'
+on run argv
+    activate
+    set answer to display dialog (item 1 of argv) with title "FLAC / AIFF to WAV" buttons {"OK", "Open WAV folder"} default button "Open WAV folder"
+    return button returned of answer
+end run
+APPLESCRIPT
+) || exit "$result"
+if [ "$button" = 'Open WAV folder' ] && [ -d "$folder/wav" ]; then
+    /usr/bin/open "$folder/wav"
+fi
+exit "$result"
