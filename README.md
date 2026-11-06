@@ -1,10 +1,10 @@
-# FLAC → WAV for DJs
+# FLAC / AIFF → WAV for DJs
 
-Need WAV copies of your FLAC tracks for your DJ setup? Batch-convert the FLAC files in a folder on Windows or macOS and find the results in a separate `wav` folder.
+Need WAV copies of your FLAC or AIFF tracks for your DJ setup? Batch-convert the FLAC and AIFF files in a folder on Windows or macOS and find the results in a separate `wav` folder.
 
 **[Download for Windows & macOS — ZIP](https://github.com/Fsas12/flac-to-wav-dj/archive/refs/heads/main.zip)** · [macOS setup](README.macOS.md) · [Русская инструкция](README.ru.md)
 
-Free to use. Original FLAC files stay untouched, and audio is processed on your computer.
+Free to use. Original FLAC and AIFF files stay untouched, and audio is processed on your computer.
 
 **Windows:** Windows 10/11 and FFmpeg downloaded separately; use `convert_flac_to_wav.bat`. **macOS:** use `convert_flac_to_wav.command` and follow the [macOS instructions](README.macOS.md). Neither launcher requires the companion PowerShell script from v1.0.0.
 
@@ -16,7 +16,7 @@ Free to use. Original FLAC files stay untouched, and audio is processed on your 
 
 1. Download and extract the ZIP linked above. Open the extracted project folder containing `convert_flac_to_wav.bat`.
 2. Set up FFmpeg. On 64-bit Windows, open [Gyan's Windows builds](https://www.gyan.dev/ffmpeg/builds/), download `ffmpeg-release-essentials.zip`, and extract it. Copy `ffmpeg.exe` from its `bin` folder into the folder containing the BAT file. If FFmpeg is already available through PATH, skip this step.
-3. For a first try, copy 1–2 FLAC tracks directly into that same folder. Subfolders are not scanned.
+3. For a first try, copy 1–2 FLAC or AIFF tracks directly into that same folder. Subfolders are not scanned.
 4. Double-click `convert_flac_to_wav.bat`. FFmpeg's progress and any errors appear in the window.
 5. Open the `wav` folder beside the BAT file. Play the resulting WAVs and check them in your DJ software or player before processing the rest of your selection.
 
@@ -28,15 +28,15 @@ Free to use. Original FLAC files stay untouched, and audio is processed on your 
 
 ## macOS
 
-Use `convert_flac_to_wav.command`: double-click it after installing FFmpeg and placing FLAC files beside it. Results go to `wav`. This macOS script skips existing WAVs and reports converted/skipped/failed counts; those features are specific to the macOS launcher.
+Use `convert_flac_to_wav.command`: double-click it after installing FFmpeg and placing FLAC or AIFF files beside it. Results go to `wav`. This macOS script skips existing WAVs and reports converted/skipped/failed counts; those features are specific to the macOS launcher.
 
 [macOS setup and troubleshooting](README.macOS.md)
 
 ## What this BAT does
 
-- Runs FFmpeg for each `.flac` file directly in the current folder.
+- Runs FFmpeg for each `.flac`, `.aif`, or `.aiff` file directly in the current folder.
 - Saves WAV files with matching base names in a `wav` subfolder.
-- Leaves the source FLAC files untouched.
+- Leaves the source FLAC or AIFF files untouched.
 - Displays FFmpeg's console output and keeps the window open at the end.
 - Processes audio locally; the BAT contains no upload or telemetry commands.
 
@@ -44,7 +44,9 @@ This simple launcher has no settings interface, recursive scanning, automatic sa
 
 ## Audio settings and compatibility
 
-The BAT uses FFmpeg's default WAV conversion settings. FFmpeg's default WAV audio encoder is 16-bit PCM; this launcher does not offer a 24-bit mode or selectable sample rate. Do not assume that a 24-bit FLAC retains its original bit depth.
+Supported inputs: `.flac`, `.aif`, `.aiff`, including uppercase extensions. Files with the same base name share an output: `track.flac` and `track.aiff` both map to `wav/track.wav`. Use distinct base names to keep both. Windows asks about an existing output; macOS skips it.
+
+The BAT uses FFmpeg's default WAV conversion settings. FFmpeg's default WAV audio encoder is 16-bit PCM; this launcher does not offer a 24-bit mode or selectable sample rate. Do not assume that a 24-bit FLAC or AIFF retains its original bit depth.
 
 Compatibility depends on your player's supported bit depths, sample rates and channel counts. Check the resulting files on the intended device. Preservation of artwork and all DJ/library metadata is not guaranteed, and WAV files usually occupy more disk space than FLACs.
 
@@ -54,11 +56,11 @@ The utility does not format USB drives or analyze tracks in DJ software.
 
 **FFmpeg is not recognized:** put `ffmpeg.exe` in the extracted project folder and launch the BAT from that folder. Alternatively, add FFmpeg's `bin` folder to PATH and open a new terminal before trying again.
 
-**No FLAC files are converted:** place the FLAC files directly beside the BAT. Files inside subfolders are not scanned.
+**No FLAC or AIFF files are converted:** place the FLAC or AIFF files directly beside the BAT. Files inside subfolders are not scanned.
 
 **FFmpeg asks to overwrite a file:** choose `N` to keep the existing WAV. For a fresh conversion, use another project folder.
 
-**An error appears or a WAV does not play:** read the FFmpeg message in the window and check whether the source FLAC plays. This BAT does not validate completed outputs or produce a CSV error log; inspect the resulting files before using them for a set.
+**An error appears or a WAV does not play:** read the FFmpeg message in the window and check whether the source FLAC or AIFF plays. This BAT does not validate completed outputs or produce a CSV error log; inspect the resulting files before using them for a set.
 
 **You downloaded v1.0.0:** that release uses a different PowerShell implementation. For the simple BAT workflow documented here, use the ZIP linked at the top of this page.
 

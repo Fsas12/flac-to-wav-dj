@@ -24,6 +24,11 @@ class MacConverterTests(unittest.TestCase):
             "-i", "sine=frequency=440:duration=0.1:sample_rate=48000",
             "-ac", "2", "-c:a", "flac", "-sample_fmt", "s32", str(cls.fixture),
         ], check=True)
+        cls.aiff_fixture = Path(cls.fixture_dir.name) / "source.aiff"
+        subprocess.run([
+            FFMPEG, "-hide_banner", "-loglevel", "error", "-i", str(cls.fixture),
+            "-c:a", "pcm_s24be", str(cls.aiff_fixture),
+        ], check=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -40,7 +45,8 @@ class MacConverterTests(unittest.TestCase):
 
     def track(self, name="track.flac", directory=None):
         path = (directory or self.root) / name
-        shutil.copy2(self.fixture, path)
+        fixture = self.aiff_fixture if path.suffix.lower() in (".aif", ".aiff") else self.fixture
+        shutil.copy2(fixture, path)
         return path
 
     def run_converter(self, *args, env=None):
@@ -90,7 +96,7 @@ class MacConverterTests(unittest.TestCase):
         self.track(directory=child)
         result = self.run_converter()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("No FLAC files found", result.stdout)
+        self.assertIn("No FLAC or AIFF files found", result.stdout)
         self.assertFalse((self.root / "wav").exists())
 
     def test_optional_input_folder(self):
@@ -111,6 +117,39 @@ class MacConverterTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Skipped: 1", result.stdout)
         self.assertTrue(target.is_symlink())
+
+    def test_aiff_extensions_and_mixed_batch(self):
+        names = ["regular.aif", "Кириллица & [mix] 'quote'.AIFF", "mixed.AiFf", "flac.flac"]
+        sources = [self.track(name) for name in names]
+        before = {path: path.read_bytes() for path in sources}
+        result = self.run_converter()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Converted: 4 | Skipped: 0 | Failed: 0", result.stdout)
+        for source in sources:
+            self.assertEqual(source.read_bytes(), before[source])
+            with wave.open(str(self.root / "wav" / (source.stem + ".wav"))) as audio:
+                self.assertEqual((audio.getsampwidth(), audio.getframerate(), audio.getnchannels(), audio.getnframes()), (2, 48000, 2, 4800))
+        second = self.run_converter()
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertIn("Converted: 0 | Skipped: 4 | Failed: 0", second.stdout)
+
+    def test_same_basename_across_formats_is_not_overwritten(self):
+        self.track("same.flac")
+        self.track("same.aif")
+        self.track("same.aiff")
+        result = self.run_converter()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Converted: 1 | Skipped: 2 | Failed: 0", result.stdout)
+        self.assertEqual(len(list((self.root / "wav").glob("*.wav"))), 1)
+
+    def test_corrupt_aiff_continues_to_other_aiff(self):
+        (self.root / "broken.aif").write_bytes(b"not AIFF")
+        self.track("good.aiff")
+        result = self.run_converter()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Converted: 1 | Skipped: 0 | Failed: 1", result.stdout)
+        self.assertFalse((self.root / "wav" / "broken.wav").exists())
+        self.assertTrue((self.root / "wav" / "good.wav").is_file())
 
     def test_missing_dependency_has_actionable_message(self):
         if any(Path(path).exists() for path in ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"]):

@@ -1,15 +1,19 @@
-name: macOS converter
+name: macOS and Windows converters
 
 on:
   push:
     paths:
       - 'convert_flac_to_wav.command'
+      - 'convert_flac_to_wav.bat'
       - 'tests/test_macos_converter.py'
+      - 'tests/test_windows_converter.py'
       - '.github/workflows/macos-converter.yml'
   pull_request:
     paths:
       - 'convert_flac_to_wav.command'
+      - 'convert_flac_to_wav.bat'
       - 'tests/test_macos_converter.py'
+      - 'tests/test_windows_converter.py'
       - '.github/workflows/macos-converter.yml'
 
 permissions:
@@ -31,4 +35,21 @@ jobs:
       - name: Install FFmpeg if needed
         run: command -v ffmpeg >/dev/null 2>&1 || brew install ffmpeg
       - name: Test with real conversions and synthetic audio
-        run: python3 -m unittest discover -s tests -v
+        run: python3 -m unittest discover -s tests -p test_macos_converter.py -v
+
+  windows-synthetic-audio:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install FFmpeg if needed
+        shell: pwsh
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            choco install ffmpeg --no-progress -y
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Test BAT with real conversions and synthetic audio
+        run: python -m unittest discover -s tests -p test_windows_converter.py -v

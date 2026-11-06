@@ -30,7 +30,7 @@ if ! script_dir=$(cd -- "$script_dir" && pwd -P); then
     finish 2
 fi
 if [ "$#" -gt 1 ]; then
-    printf 'Usage: %s [folder-with-FLAC-files]\n' "$0" >&2
+    printf 'Usage: %s [folder-with-FLAC-or-AIFF-files]\n' "$0" >&2
     finish 2
 fi
 if ! source_dir=$(cd -- "${1:-$script_dir}" && pwd -P); then
@@ -40,13 +40,13 @@ fi
 
 shopt -s nullglob nocaseglob
 input_files=()
-for source in "$source_dir"/*.flac; do
+for source in "$source_dir"/*.flac "$source_dir"/*.aif "$source_dir"/*.aiff; do
     if [ -f "$source" ]; then
         input_files+=("$source")
     fi
 done
 if [ "${#input_files[@]}" -eq 0 ]; then
-    printf 'No FLAC files found in:\n%s\nPut FLAC files directly in this folder and try again.\n' "$source_dir"
+    printf 'No FLAC or AIFF files found in:\n%s\nPut FLAC or AIFF files directly in this folder and try again.\n' "$source_dir"
     finish 0
 fi
 
@@ -82,7 +82,7 @@ converted=0
 skipped=0
 failed=0
 index=0
-printf 'FLAC -> WAV | 16-bit PCM | %s files\nInput: %s\n\n' "${#input_files[@]}" "$source_dir"
+printf 'FLAC / AIFF -> WAV | 16-bit PCM | %s files\nInput: %s\n\n' "${#input_files[@]}" "$source_dir"
 for source in "${input_files[@]}"; do
     index=$((index + 1))
     filename=${source##*/}
