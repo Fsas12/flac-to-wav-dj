@@ -8,15 +8,15 @@ Convert a folder of FLAC and AIFF tracks to WAV on Windows or macOS. Original fi
 
 ### Windows: double-click, no commands to type
 
-1. Extract the ZIP. Keep `convert_flac_to_wav.bat` and `Install-FFmpeg.ps1` together.
-2. Copy FLAC / AIFF tracks directly into that folder.
-3. Double-click `convert_flac_to_wav.bat`.
+1. Extract the ZIP. Keep `convert_flac_to_wav.bat`, `Convert-AudioTree.ps1`, and `Install-FFmpeg.ps1` together.
+2. Drag your Soulseek downloads folder onto `convert_flac_to_wav.bat`. All its subfolders are scanned automatically.
+3. Alternatively, double-click the BAT to process the folder containing it, including its subfolders.
 4. If FFmpeg is missing, click **Yes** in the setup dialog. The helper downloads a verified FFmpeg build once and continues automatically.
-5. Find the WAVs in the `wav` subfolder.
+5. Find the WAVs in the selected folder's `wav` subfolder, with the same user/album structure.
 
 The converter first checks for an existing FFmpeg beside the BAT, in PATH, or in its private user cache. The automatic download is a 64-bit Windows build, about 109 MB, and needs internet once. It is saved in `%LOCALAPPDATA%\FLAC-to-WAV-DJ\ffmpeg`. No administrator password or PATH editing is needed.
 
-Existing output WAVs may trigger FFmpeg's overwrite question. Choose `N` to keep an existing file. The Windows BAT does not automatically skip outputs.
+Existing output WAVs are skipped automatically. Re-run the converter after adding downloads: completed WAVs stay untouched.
 
 ### macOS: open the app
 
@@ -31,16 +31,27 @@ The app uses macOS's built-in audio converter: **no FFmpeg, Homebrew, installati
 
 ![FLAC to WAV for DJs](assets/banner.png)
 
+## Soulseek folders
+
+Choose the root download folder once. Users and albums stay separate in the output:
+
+| Source | Result |
+| --- | --- |
+| `Soulseek/User A/Album 1/01.flac` | `Soulseek/wav/User A/Album 1/01.wav` |
+| `Soulseek/User B/Album 2/01.aiff` | `Soulseek/wav/User B/Album 2/01.wav` |
+
+The root `wav` output tree is excluded from scanning. Folder/file symlinks and Windows junctions are not followed, preventing loops.
+
 ## What gets converted
 
 - `.flac`, `.aif`, and `.aiff`, including uppercase extensions.
-- Files directly in the chosen folder on Mac, or beside the BAT on Windows. Subfolders are not scanned.
-- WAVs with matching base names, in a `wav` subfolder.
+- Files in the selected folder and all its ordinary subfolders, on both platforms.
+- WAVs with matching base names and relative folder paths, inside one root `wav` subfolder.
 - Original audio stays on your computer. The Windows setup helper downloads software, never your tracks.
 
-The Mac app skips existing outputs, continues after a damaged file, and reports converted/skipped/failed counts. Windows retains the simple FFmpeg console workflow. Neither version creates CSV logs.
+Both versions skip existing outputs, continue after a damaged file, and report converted/skipped/failed counts. Neither version creates CSV logs.
 
-**Matching names:** `track.flac` and `track.aiff` share `wav/track.wav`. Use distinct base names to keep both. Mac skips the later output; Windows asks about overwriting.
+**Matching names:** `track.flac` and `track.aiff` share `wav/track.wav`. Within the same input folder, use distinct base names to keep both. Identically named tracks in different user/album folders remain separate.
 
 ## Audio settings and compatibility
 
@@ -52,11 +63,11 @@ Check the results in your intended DJ software or player before processing a who
 
 **Windows setup cannot finish:** check internet access, free space, and permissions for your local user folder. Cancelled or checksum-failed downloads do not get installed. An error dialog explains the problem; rerun the BAT after fixing it. You can also put a trusted Windows `ffmpeg.exe` beside the BAT.
 
-**Managed Windows computer:** organization policies may block the PowerShell setup helper. It runs with a process-scoped execution-policy override and does not change system policy. An already installed FFmpeg is used directly without this helper.
+**Managed Windows computer:** organization policies may block Windows PowerShell, which is used by setup and recursive conversion. The launcher's process-scoped execution-policy override does not change system policy.
 
 **Mac will not open the app:** follow [Apple's instructions for software you trust](https://support.apple.com/102445). The app is not signed or notarized with an Apple Developer ID. No global Gatekeeper setting needs changing.
 
-**No files found:** put supported files directly in the relevant folder; subfolders are not scanned.
+**No files found:** select a folder containing supported audio, directly or in subfolders. Symlinks, junctions and the root `wav` output tree are excluded.
 
 **A file fails:** check the original audio and free space. Mac continues with the other tracks; Windows displays FFmpeg's errors.
 

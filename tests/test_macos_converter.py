@@ -90,14 +90,59 @@ class MacConverterTests(unittest.TestCase):
         self.assertFalse((self.root / "wav" / "bad.wav").exists())
         self.assertEqual(list((self.root / "wav").glob(".flac-to-wav.*")), [])
 
-    def test_empty_folder_and_subfolders_are_not_scanned(self):
-        child = self.root / "subfolder"
-        child.mkdir()
-        self.track(directory=child)
+    def test_empty_folder(self):
         result = self.run_converter()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("No FLAC or AIFF files found", result.stdout)
         self.assertFalse((self.root / "wav").exists())
+
+    def test_soulseek_tree_preserves_users_albums_and_duplicate_track_names(self):
+        folders = [self.root / "Пользователь [1]" / "Альбом A", self.root / "Пользователь [1]" / "Альбом B", self.root / "User & (2) !" / "Album C"]
+        sources = []
+        for folder, name in zip(folders, ['01.flac', '01.aiff', '01.AIF']):
+            folder.mkdir(parents=True)
+            sources.append(self.track(name, directory=folder))
+        originals = {path: path.read_bytes() for path in sources}
+        result = self.run_converter()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Converted: 3 | Skipped: 0 | Failed: 0', result.stdout)
+        for source in sources:
+            target = (self.root / 'wav' / source.relative_to(self.root)).with_suffix('.wav')
+            self.assertEqual(source.read_bytes(), originals[source])
+            with wave.open(str(target)) as audio:
+                self.assertEqual(audio.getnframes(), 4800)
+        before = {path: path.read_bytes() for path in (self.root / 'wav').rglob('*.wav')}
+        again = self.run_converter()
+        self.assertEqual(again.returncode, 0, again.stderr)
+        self.assertIn('Converted: 0 | Skipped: 3 | Failed: 0', again.stdout)
+        self.assertTrue(all(path.read_bytes() == data for path, data in before.items()))
+
+    def test_output_tree_and_symlinks_are_not_scanned(self):
+        source = self.track('original.flac')
+        output = self.root / 'wav'
+        output.mkdir()
+        self.track('ignore.aiff', directory=output)
+        (self.root / 'loop').symlink_to(self.root, target_is_directory=True)
+        (self.root / 'duplicate.flac').symlink_to(source)
+        result = self.run_converter()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Converted: 1 | Skipped: 0 | Failed: 0', result.stdout)
+        self.assertTrue((output / 'original.wav').is_file())
+        self.assertFalse((output / 'wav').exists())
+        self.assertFalse((output / 'loop').exists())
+        self.assertFalse((output / 'duplicate.wav').exists())
+
+    def test_root_with_brackets_and_existing_uppercase_output_directory(self):
+        music = self.root / 'Soulseek [root]'
+        music.mkdir()
+        self.track('original.aiff', directory=music)
+        output = music / 'WAV'
+        output.mkdir()
+        self.track('ignore.flac', directory=output)
+        result = self.run_converter(music)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Converted: 1 | Skipped: 0 | Failed: 0', result.stdout)
+        self.assertFalse((music / 'wav' / 'WAV').exists())
 
     def test_optional_input_folder(self):
         folder = self.root / "another folder"
@@ -157,7 +202,11 @@ class MacConverterTests(unittest.TestCase):
         if any(Path(path).exists() for path in ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"]):
             self.skipTest("Homebrew fallback is installed on this host")
         self.track()
-        result = self.run_converter(env={**os.environ, "PATH": ""})
+        system_tools = self.root / 'system-tools'
+        system_tools.mkdir()
+        for name in ['find', 'mktemp', 'rm', 'mkdir', 'mv']:
+            (system_tools / name).symlink_to(shutil.which(name))
+        result = self.run_converter(env={**os.environ, "PATH": str(system_tools)})
         self.assertEqual(result.returncode, 2)
         self.assertIn("brew install ffmpeg", result.stdout)
         self.assertFalse((self.root / "wav").exists())

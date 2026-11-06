@@ -45,12 +45,13 @@ class WindowsSetupTests(unittest.TestCase):
         self.assertEqual(again.returncode, 0, again.stderr)
         self.assertEqual(binary.stat().st_mtime_ns, stamp)
 
-    def test_bat_uses_private_install_without_path_or_powershell_conversion(self):
+    def test_bat_uses_private_install_without_path_configuration(self):
         self.assertEqual(self.installation.returncode, 0, self.installation.stderr)
         music = self.root / 'music'
         music.mkdir(exist_ok=True)
         launcher = music / 'convert_flac_to_wav.bat'
         shutil.copy2(ROOT / launcher.name, launcher)
+        shutil.copy2(ROOT / 'Convert-AudioTree.ps1', music / 'Convert-AudioTree.ps1')
         subprocess.run([
             FFMPEG, '-hide_banner', '-loglevel', 'error', '-f', 'lavfi',
             '-i', 'sine=frequency=440:duration=0.1:sample_rate=48000',

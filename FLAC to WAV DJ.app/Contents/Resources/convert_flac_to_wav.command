@@ -3,9 +3,13 @@
 set -u
 
 temp_file=''
+scan_file=''
 cleanup() {
     if [ -n "$temp_file" ] && [ -f "$temp_file" ]; then
         rm -f -- "$temp_file"
+    fi
+    if [ -n "$scan_file" ] && [ -f "$scan_file" ]; then
+        rm -f -- "$scan_file"
     fi
 }
 trap cleanup EXIT
@@ -38,15 +42,27 @@ if ! source_dir=$(cd -- "${1:-$script_dir}" && pwd -P); then
     finish 2
 fi
 
-shopt -s nullglob nocaseglob
+source_prefix="${source_dir%/}/"
+output_dir="${source_prefix}wav"
+if ! scan_file=$(mktemp "${TMPDIR:-/tmp}/flac-to-wav-scan.XXXXXX"); then
+    printf 'ERROR: Cannot create a temporary file list.\n' >&2
+    finish 2
+fi
+# NUL-delimited paths preserve spaces, newlines and non-Latin names. The output
+# tree is excluded, and find does not follow directory or file symlinks.
+if ! (cd -- "$source_dir" && find . -ipath './wav' -prune -o -type f \
+    \( -iname '*.flac' -o -iname '*.aif' -o -iname '*.aiff' \) -print0) > "$scan_file"; then
+    printf 'ERROR: Could not scan all input folders. Check folder permissions.\n' >&2
+    finish 2
+fi
 input_files=()
-for source in "$source_dir"/*.flac "$source_dir"/*.aif "$source_dir"/*.aiff; do
-    if [ -f "$source" ]; then
-        input_files+=("$source")
-    fi
-done
+while IFS= read -r -d '' source; do
+    input_files+=("$source_prefix${source#./}")
+done < "$scan_file"
+rm -f -- "$scan_file"
+scan_file=''
 if [ "${#input_files[@]}" -eq 0 ]; then
-    printf 'No FLAC or AIFF files found in:\n%s\nPut FLAC or AIFF files directly in this folder and try again.\n' "$source_dir"
+    printf 'No FLAC or AIFF files found in this folder or its subfolders:\n%s\n' "$source_dir"
     finish 0
 fi
 
@@ -86,7 +102,6 @@ elif [ -z "$ffmpeg" ]; then
     finish 2
 fi
 
-output_dir="$source_dir/wav"
 if ! mkdir -p -- "$output_dir"; then
     printf 'ERROR: Cannot create the wav folder. Check write permissions and free space.\n' >&2
     finish 2
@@ -109,15 +124,22 @@ convert_audio() {
 for source in "${input_files[@]}"; do
     index=$((index + 1))
     filename=${source##*/}
-    target="$output_dir/${filename%.*}.wav"
+    relative=${source#"$source_prefix"}
+    target="$output_dir/${relative%.*}.wav"
     if [ -e "$target" ] || [ -L "$target" ]; then
-        printf '[%s/%s] SKIP (already exists): %s\n' "$index" "${#input_files[@]}" "$filename"
+        printf '[%s/%s] SKIP (already exists): %s\n' "$index" "${#input_files[@]}" "$relative"
         skipped=$((skipped + 1))
         continue
     fi
 
-    printf '[%s/%s] CONVERT: %s\n' "$index" "${#input_files[@]}" "$filename"
-    if ! temp_file=$(mktemp "$output_dir/.flac-to-wav.XXXXXX"); then
+    printf '[%s/%s] CONVERT: %s\n' "$index" "${#input_files[@]}" "$relative"
+    target_dir=${target%/*}
+    if ! mkdir -p -- "$target_dir"; then
+        printf 'ERROR: Cannot create output folder for %s\n' "$relative" >&2
+        failed=$((failed + 1))
+        continue
+    fi
+    if ! temp_file=$(mktemp "$target_dir/.flac-to-wav.XXXXXX"); then
         printf 'ERROR: Cannot create a temporary file in the wav folder.\n' >&2
         finish 2
     fi

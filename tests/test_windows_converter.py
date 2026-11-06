@@ -38,6 +38,7 @@ class WindowsConverterTests(unittest.TestCase):
         self.root = Path(self.directory.name)
         self.launcher = self.root / SCRIPT.name
         shutil.copy2(SCRIPT, self.launcher)
+        shutil.copy2(SCRIPT.parent / 'Convert-AudioTree.ps1', self.root / 'Convert-AudioTree.ps1')
 
     def tearDown(self):
         self.directory.cleanup()
@@ -47,9 +48,13 @@ class WindowsConverterTests(unittest.TestCase):
         shutil.copy2(self.flac if target.suffix.lower() == ".flac" else self.aiff, target)
         return target
 
-    def convert(self):
+    def convert(self, folder=None):
+        command = f'"{os.environ["COMSPEC"]}" /d /s /c ""{self.launcher}"'
+        if folder is not None:
+            command += f' "{folder}"'
+        command += '"'
         return subprocess.run(
-            ["cmd.exe", "/d", "/c", str(self.launcher)], cwd=self.root,
+            command, cwd=self.root,
             input="n\nn\nn\n\n", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             encoding="utf-8", errors="replace", timeout=40,
         )
@@ -74,13 +79,56 @@ class WindowsConverterTests(unittest.TestCase):
         self.convert()
         self.assertEqual(target.read_bytes(), b"existing output must stay")
 
-    def test_empty_folder_ignores_other_files_and_subfolders(self):
-        child = self.root / "subfolder"
-        child.mkdir()
-        self.track("nested.aiff", directory=child)
+    def test_empty_folder_ignores_other_files(self):
         (self.root / "notes.txt").write_text("not audio")
         self.convert()
         self.assertEqual(list((self.root / "wav").glob("*.wav")), [])
+
+    def test_soulseek_tree_and_dragged_folder(self):
+        music = self.root / 'Soulseek downloads'
+        folders = [music / 'Пользователь [1]' / 'Album A', music / 'Пользователь [1]' / 'Album B', music / 'User & (2) !' / 'Album C']
+        sources = []
+        for folder, name in zip(folders, ['01.flac', '01.aiff', '01.AIF']):
+            folder.mkdir(parents=True)
+            sources.append(self.track(name, directory=folder))
+        originals = {path: path.read_bytes() for path in sources}
+        result = self.convert(music)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertIn('Converted: 3 | Skipped: 0 | Failed: 0', result.stdout)
+        outputs = []
+        for source in sources:
+            target = (music / 'wav' / source.relative_to(music)).with_suffix('.wav')
+            outputs.append(target)
+            self.assertEqual(source.read_bytes(), originals[source])
+            with wave.open(str(target)) as audio:
+                self.assertEqual(audio.getnframes(), 4800)
+        before = {path: path.read_bytes() for path in outputs}
+        again = self.convert(music)
+        self.assertEqual(again.returncode, 0, again.stderr + again.stdout)
+        self.assertIn('Converted: 0 | Skipped: 3 | Failed: 0', again.stdout)
+        self.assertTrue(all(path.read_bytes() == data for path, data in before.items()))
+
+    def test_output_tree_is_not_scanned(self):
+        self.track('original.flac')
+        output = self.root / 'wav'
+        output.mkdir()
+        self.track('ignore.aiff', directory=output)
+        result = self.convert()
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertIn('Converted: 1 | Skipped: 0 | Failed: 0', result.stdout)
+        self.assertFalse((output / 'wav').exists())
+
+    def test_directory_junction_loop_is_not_followed(self):
+        self.track('original.flac')
+        link = self.root / 'loop'
+        command = f'"{os.environ["COMSPEC"]}" /d /s /c mklink /J "{link}" "{self.root}"'
+        created = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if created.returncode != 0:
+            self.skipTest('This machine does not allow directory junctions')
+        result = self.convert()
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertIn('Converted: 1 | Skipped: 0 | Failed: 0', result.stdout)
+        self.assertFalse((self.root / 'wav' / 'loop').exists())
 
     def test_corrupt_aiff_does_not_stop_other_files(self):
         (self.root / "bad.aif").write_bytes(b"not AIFF")
