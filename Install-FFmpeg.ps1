@@ -80,11 +80,20 @@ try {
         $label.Text = 'Checking the download and extracting FFmpeg...'
         [System.Windows.Forms.Application]::DoEvents()
     }
-    $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+    # Use .NET directly: PowerShell module auto-loading can differ across hosts.
+    $hashStream = [IO.File]::OpenRead($archive)
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        $actualHash = ([BitConverter]::ToString($sha256.ComputeHash($hashStream))).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $hashStream.Dispose()
+        $sha256.Dispose()
+    }
     if ($actualHash -ne $expectedHash) {
         throw 'The FFmpeg download failed its checksum check. Nothing was installed. Please try again.'
     }
-    Expand-Archive -LiteralPath $archive -DestinationPath $expanded
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [IO.Compression.ZipFile]::ExtractToDirectory($archive, $expanded)
     $executable = Get-ChildItem -LiteralPath $expanded -Filter 'ffmpeg.exe' -File -Recurse | Select-Object -First 1
     if (-not $executable) { throw 'FFmpeg was not found inside the downloaded archive.' }
     & $executable.FullName -version | Out-Null
